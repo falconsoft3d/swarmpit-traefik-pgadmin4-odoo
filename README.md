@@ -2,54 +2,43 @@
 ```
 version: '3.3'
 services:
-  pgadmin:
-    image: dpage/pgadmin4:4.6
-    labels:
-      traefik.http.routers.pgadmin-http.service: pgadmin
-      traefik.http.middlewares.pgadmin-https-redirect.redirectscheme.scheme: https
-      traefik.http.routers.pgadmin-https.service: pgadmin
-      traefik.http.routers.pgadmin-https.tls: 'true'
-      traefik.http.routers.pgadmin-https.rule: Host(`pgadmin4.odooerp.online`)
-      traefik.http.routers.pgadmin-http.entrypoints: http
-      traefik.http.routers.pgadmin-https.tls.certresolver: letsencrypt
-      swarmpit.service.deployment.autoredeploy: 'true'
-      traefik.http.routers.pgadmin-http.rule: Host(`pgadmin4.odooerp.online`)
-      traefik.http.services.pgadmin.loadbalancer.server.port: '5050'
-      traefik.http.routers.pgadmin-http.middlewares: pgadmin-https-redirect
-      traefik.http.routers.pgadmin-https.entrypoints: https
-      traefik.enable: 'true'
+  odoo16:
+    image: odoo:16
     environment:
-      PGADMIN_DEFAULT_EMAIL: mfalconsoft@gmail.com
-      PGADMIN_DEFAULT_PASSWORD: admin100
-      PGADMIN_LISTEN_PORT: '80'
-    ports:
-     - 5050:80
+      HOST: postgres_postgres13
+      PASSWORD: odoo
+      PORT: '5432'
+      USER: odoo
     volumes:
-     - app-postgres:/var/lib/postgresql/data/pgdata
+     - data:/var/lib/odoo/
     networks:
-     - app-postgree
+     - postgres_app-postgree
      - traefik
     logging:
       driver: json-file
-  postgres13:
-    image: postgres:13
-    environment:
-      PGDATA: /var/lib/postgresql/data/pgdata
-      POSTGRES_DB: postgres
-      POSTGRES_PASSWORD: odoo
-      POSTGRES_USER: odoo
-    volumes:
-     - app-postgres:/var/lib/postgresql/data/pgdata
-    networks:
-     - app-postgree
-    logging:
-      driver: json-file
+    deploy:
+      labels:
+        traefik.http.routers.odoo16-https.entrypoints: https
+        traefik.http.routers.odoo16-https.tls.certresolver: letsencrypt
+        traefik.http.routers.odoo16-http.middlewares: odoo16-https-redirect
+        swarmpit.service.deployment.autoredeploy: 'true'
+        traefik.http.routers.odoo-16-http.entrypoints: http
+        traefik.http.middlewares.odoo16-https-redirect.redirectscheme.scheme: https
+        traefik.http.routers.odoo16-https.rule: Host(`odoo16.odooerp.online`)
+        traefik.http.routers.odoo16-http.rule: Host(`odoo16.odooerp.online`)
+        traefik.http.routers.odoo16-https.service: odoo16
+        traefik.http.routers.odoo16-https.tls: 'true'
+        traefik.http.routers.odoo16-http.service: odoo16
+        traefik.enable: 'true'
+        traefik.http.services.odoo16.loadbalancer.server.port: '8069'
+      update_config:
+        delay: 2s
 networks:
-  app-postgree:
-    driver: overlay
+  postgres_app-postgree:
+    external: true
   traefik:
     external: true
 volumes:
-  app-postgres:
+  data:
     driver: local
     ```
